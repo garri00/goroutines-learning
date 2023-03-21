@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -32,9 +31,6 @@ func main() {
 	ch1 := make(chan int)
 	ch2 := make(chan int)
 
-	// Dont figure out how to work with this, but it will help
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
 	go func() {
 		for {
 			<-ch2
@@ -57,10 +53,8 @@ func main() {
 
 	}()
 
-	<-ctx.Done()
 	fmt.Println("Timeout")
-	//time.Sleep(10 * time.Second)
-	cancel()
+	time.Sleep(10 * time.Second)
 
 	fmt.Println("PingPong value : ", pp.GetValue())
 }

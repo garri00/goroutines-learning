@@ -41,16 +41,14 @@ func main() {
 			case <-ctx.Done():
 				//exit out go routine
 				return
-			default:
-				<-ch2
+			case <-ch2:
+
 				pp.Inc()
 				fmt.Println("ping : ", pp.GetValue())
 				//time.Sleep(time.Second)
 				ch1 <- 1
 			}
-
 		}
-
 	}()
 
 	go func() {
@@ -61,20 +59,20 @@ func main() {
 			case <-ctx.Done():
 				//exit out go routine
 				return
-			default:
+			case <-ch1:
+
 				ch2 <- 1
-				<-ch1
+
 				pp.Inc()
 				fmt.Println("pong : ", pp.GetValue())
 				//time.Sleep(time.Second)
 			}
 
 		}
-
 	}()
 
 	fmt.Println("Timeout")
-	time.Sleep(11 * time.Second)
+	// time.Sleep(11 * time.Second)
 	cancel()
 
 	fmt.Println("PingPong value : ", pp.GetValue())

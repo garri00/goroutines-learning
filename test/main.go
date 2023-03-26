@@ -3,77 +3,60 @@ package main
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 )
 
-type ppcount struct {
-	mu sync.Mutex
-	v  int
-}
-
-func (pp *ppcount) Inc() {
-	pp.mu.Lock()
-
-	defer pp.mu.Unlock()
-	pp.v++
-}
-
-// Do not need this function
-func (pp *ppcount) GetValue() int {
-	pp.mu.Lock()
-
-	defer pp.mu.Unlock()
-	return pp.v
-}
-
 func main() {
-	pp := ppcount{v: 0}
 	ch1 := make(chan int)
 	ch2 := make(chan int)
 
-	// Dont figure out how to work with this, but it will help
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	counter := 0
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				//exit out go routine
+				fmt.Println("gone1")
+				close(ch2)
+				close(ch1)
 				return
-			case <-ch2:
 
-				pp.Inc()
-				fmt.Println("ping : ", pp.GetValue())
-				//time.Sleep(time.Second)
-				ch1 <- 1
+			default:
+				value := <-ch2
+				fmt.Println("ping : ", value)
+				ch1 <- value + 1
 			}
+
 		}
+
 	}()
 
 	go func() {
-
 		for {
 
 			select {
 			case <-ctx.Done():
-				//exit out go routine
+				fmt.Println("gone2")
+				close(ch2)
+				close(ch1)
 				return
-			case <-ch1:
 
-				ch2 <- 1
-
-				pp.Inc()
-				fmt.Println("pong : ", pp.GetValue())
-				//time.Sleep(time.Second)
+			default:
+				ch2 <- counter + 1
+				counter = <-ch1
+				fmt.Println("pong : ", counter)
 			}
 
 		}
+
 	}()
 
 	fmt.Println("Timeout")
-	// time.Sleep(11 * time.Second)
+	//time.Sleep(5 * time.Second)
+	<-ctx.Done()
 	cancel()
 
-	fmt.Println("PingPong value : ", pp.GetValue())
+	defer fmt.Println("PingPong value : ", counter)
 }

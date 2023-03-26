@@ -2,48 +2,43 @@ package main
 
 import (
 	"fmt"
-	"sync"
 )
 
 func main() {
 	mas := []int{2, 5, 6, 1, 0, 4, 3, 7, 9, 8}
-
 	fmt.Println(mas)
 
-	sorted := mergeSort(mas)
+	ch := make(chan []int)
+	go mergeSort(mas, ch)
 
-	fmt.Println(sorted)
-	//var wg sync.WaitGroup
-	//for i := 0; i < 10; i++ {
-	//	wg.Add(1)
-	//	go mergeSort(mas, &wg)
-	//}
-	//
-	//wg.Wait()
+	result := <-ch
+	fmt.Println(result)
+
 }
 
-func mergeSort(items []int) []int {
-	//defer wg.Done()
-
+func mergeSort(items []int, result chan []int) {
 	if len(items) < 2 {
-		return items
+		result <- items
+		return
 	}
 
-	//var wg2 sync.WaitGroup
-	//for n := 0; n < 2; n++ {
-	//	wg2.Add(1)
-	//	go wisper(s, i, n, &wg2)
-	//}
+	middle := len(items) / 2
 
-	//wg2.Wait()
+	ch1 := make(chan []int)
+	ch2 := make(chan []int)
 
-	first := mergeSort(items[:len(items)/2])
-	second := mergeSort(items[len(items)/2:])
-	return merge(first, second)
+	go mergeSort(items[:middle], ch1)
+	go mergeSort(items[middle:], ch2)
+
+	first := <-ch1
+	second := <-ch2
+
+	result <- merge(first, second)
 }
 
 func merge(a []int, b []int) []int {
-	final := []int{}
+	var final []int
+
 	i := 0
 	j := 0
 	for i < len(a) && j < len(b) {
@@ -55,17 +50,13 @@ func merge(a []int, b []int) []int {
 			j++
 		}
 	}
+
 	for ; i < len(a); i++ {
 		final = append(final, a[i])
 	}
+
 	for ; j < len(b); j++ {
 		final = append(final, b[j])
 	}
 	return final
-}
-
-func wisper(s string, i int, n int, wg *sync.WaitGroup) {
-
-	fmt.Printf("some wisper (%v, %v) : %v\n", i, n, s)
-	wg.Done()
 }
